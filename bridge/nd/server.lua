@@ -1,3 +1,5 @@
+if GetResourceState('ND_Core') ~= 'started' then return end
+
 function RegisterCallback(name, cb)
     lib.callback.register(name, cb)
 end
