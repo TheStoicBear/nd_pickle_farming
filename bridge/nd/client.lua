@@ -1,3 +1,5 @@
+if GetResourceState('ND_Core') ~= 'started' then return end
+
 function ShowNotification(text)
     lib.notify({
         description = text,
