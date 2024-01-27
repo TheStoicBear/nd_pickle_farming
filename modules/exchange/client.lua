@@ -6,7 +6,7 @@ function GetLocalNPC(index)
 end
 
 function CreateLocalNPC(index)
-    if (LocalNPCs[index]) then 
+    if (LocalNPCs[index]) then
         DestroyLocalNPC(index)
     end
     LocalNPCs[index] = {}
@@ -22,43 +22,45 @@ end
 
 function DestroyLocalNPC(index)
     if (LocalNPCs[index]) then
-        DeleteEntity(LocalNPCs[index].npc) 
+        DeleteEntity(LocalNPCs[index].npc)
         LocalNPCs[index] = nil
     end
 end
 
 function ExchangeRequest(index)
-    ServerCallback("pickle_farming:exchangeProcess", function(result)
+    ServerCallback("pickle_farming:exchangeProcess", false, function(result)
         if result then
             if (Config.Exchange[index].Type == "Process") then
-                ShowNotification(_L("success_process_item"))
+                ShowNotification("Successfully processed item.")
             elseif (Config.Exchange[index].Type == "Exchange") then
-                ShowNotification(_L("success_exchanged_item"))
+                ShowNotification("Successfully exchanged item(s).")
             end
         else
             if (Config.Exchange[index].Type == "Process") then
-                ShowNotification(_L("doesnt_have_enough_item_to_process"))
+                ShowNotification("You don't have any items to process.")
             elseif (Config.Exchange[index].Type == "Exchange") then
-                ShowNotification(_L("doesnt_have_any_items_exchange"))
+                ShowNotification("You don't have any items to exchange.")
             end
         end
     end, index)
 end
 
 function InteractExchange(index)
-    if Interact then return end
+    if Interact then
+        return
+    end
     Interact = true
     local data = Config.Exchange[index]
-    if (data.Type == "Process") then 
+    if (data.Type == "Process") then
         local ped = PlayerPedId()
         FreezeEntityPosition(ped, true)
         PlayAnim(ped, "mini@repair", "fixing_a_ped", -8.0, 8.0, -1, 49, 1.0)
         if Config.ExchangeSettings.EnableSkillCheck then
-            local success = lib.skillCheck({'easy', 'medium', 'medium'})
-            if success then 
+            local success = lib.skillCheck({ 'easy', 'medium', 'medium' })
+            if success then
                 ExchangeRequest(index)
             else
-                ShowNotification(_L("failed_process_item"))
+                ShowNotification("Failed to process item.")
             end
         else
             Wait(1000 * Config.ExchangeSettings.ProcessTime)
@@ -67,9 +69,9 @@ function InteractExchange(index)
         ClearPedTasks(ped)
         FreezeEntityPosition(ped, false)
         Interact = false
-    elseif (data.Type == "Exchange") then 
+    elseif (data.Type == "Exchange") then
         ExchangeRequest(index)
-        Interact = false 
+        Interact = false
     else
         dprint("Invalid type: ", data.Type)
         Interact = false
@@ -78,9 +80,9 @@ end
 
 function ShowExchangeInteract(index)
     if (Config.Exchange[index].Type == "Process") then
-        ShowHelpNotification(_L("process_your_plants"))
+        ShowHelpNotification("Press ~INPUT_CONTEXT~ to process your plants.")
     elseif (Config.Exchange[index].Type == "Exchange") then
-        ShowHelpNotification(_L("exchange_your_items"))
+        ShowHelpNotification("Press ~INPUT_CONTEXT~ to exchange your items.")
     end
 end
 
@@ -89,7 +91,7 @@ CreateThread(function()
         local wait = 1000
         local ped = PlayerPedId()
         local pcoords = GetEntityCoords(ped)
-        for i=1, #Config.Exchange do
+        for i = 1, #Config.Exchange do
             local data = Config.Exchange[i]
             local coords = v3(data.Location)
             local dist = #(pcoords - coords)
@@ -114,7 +116,7 @@ end)
 
 CreateThread(function()
     Wait(1000)
-    for i=1, #Config.Exchange do
+    for i = 1, #Config.Exchange do
         local v = Config.Exchange[i]
         if (v.Blip) then
             local data = v.Blip
@@ -126,9 +128,9 @@ end)
 
 AddEventHandler('onResourceStop', function(resourceName)
     if (GetCurrentResourceName() ~= resourceName) then
-      return
+        return
     end
-    for k,v in pairs(LocalNPCs) do 
+    for k, v in pairs(LocalNPCs) do
         DestroyLocalNPC(k)
     end
 end)

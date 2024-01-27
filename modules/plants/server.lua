@@ -16,7 +16,7 @@ function CreatePlant(source, seed, coords)
             Wait(0)
         end
         SetTimeout((1000 * Config.Plant.PlantTime), function()
-            Plants[key] = {source = source, seed = seed, water = 0, coords = coords}
+            Plants[key] = { source = source, seed = seed, water = 0, coords = coords }
             UpdatePlants()
         end)
         return key
@@ -27,7 +27,7 @@ end
 
 function GetPlayerPlants(source)
     local keys = {}
-    for k,v in pairs(Plants) do
+    for k, v in pairs(Plants) do
         if v.source == source then
             keys[#keys + 1] = k
         end
@@ -38,9 +38,9 @@ end
 function CanPlayerPlant(source, seed, coords)
     local playerPlants = #GetPlayerPlants(source)
     if Search(source, seed) < 1 then
-        return false, _L("doesnt_have_this_seed")
+        return false, "You don't have this seed."
     elseif playerPlants + 1 > Config.Plant.MaxPlayerPlants then
-        return false, _L("too_many_plants_active") .. " " .. ("..playerPlants.."/"..Config.Plant.MaxPlayerPlants..")
+        return false, "You have too many plants active (" .. playerPlants .. "/" .. Config.Plant.MaxPlayerPlants .. ")."
     else
         return true
     end
@@ -50,7 +50,7 @@ function HarvestPlant(key, source)
     local plant = Plants[key]
     local cfg = Config.Seeds[plant.seed]
     if (cfg.Rewards) then
-        for i=1, #cfg.Rewards do
+        for i = 1, #cfg.Rewards do
             local reward = cfg.Rewards[i]
             local amount = (reward.min < reward.max and math.random(reward.min, reward.max) or reward.min)
             if CanCarryItem(source, reward.name, amount) then
@@ -65,32 +65,30 @@ function HarvestPlant(key, source)
     end)
 end
 
-for k,v in pairs(Config.Seeds) do
-    RegisterUsableItem(k, function(source)
-        TriggerClientEvent("pickle_farming:plantSeed", source, k)
-    end)
-end
+exports('seed', function(event, item, inventory, slot, data)
+    if event == 'usingItem' then
+        TriggerClientEvent("pickle_farming:plantSeed", inventory.id, item.name)
+    end
+end)
 
-RegisterCallback("pickle_farming:createPlant", function(source, cb, seed, coords)
+RegisterCallback("pickle_farming:createPlant", function(source, seed, coords)
     if Interact[source] then
-        cb(false)
-        return
+        return false
     end
     Interact[source] = true
     local plant = CreatePlant(source, seed, coords)
     if plant then
         Interact[source] = false
-        cb(plant)
+        return plant
     else
         Interact[source] = false
-        cb(false)
+        return false
     end
 end)
 
-RegisterCallback("pickle_farming:waterPlant", function(source, cb, key)
+RegisterCallback("pickle_farming:waterPlant", function(source, key)
     if Interact[source] then
-        cb(false)
-        return
+        return false
     end
     Interact[source] = true
     local plant = Plants[key]
@@ -108,22 +106,21 @@ RegisterCallback("pickle_farming:waterPlant", function(source, cb, key)
                 Plants[key].water = newWater
                 UpdatePlants()
             end)
-            cb(true)
+            return true
         else
-            ShowNotification(source, _L("need_to_have_gardening_pitcher"))
+            ShowNotification(source, "You need to have a gardening pitcher.")
             Interact[source] = false
-            cb(false)
+            return false
         end
     else
         Interact[source] = false
-        cb(false)
+        return false
     end
 end)
 
-RegisterCallback("pickle_farming:harvestPlant", function(source, cb, key)
+RegisterCallback("pickle_farming:harvestPlant", function(source, key)
     if Interact[source] then
-        cb(false)
-        return
+        return false
     end
     Interact[source] = true
     local plant = Plants[key]
@@ -133,14 +130,14 @@ RegisterCallback("pickle_farming:harvestPlant", function(source, cb, key)
                 HarvestPlant(key, source)
                 Interact[source] = false
             end)
-            cb(true)
+            return true
         else
-            ShowNotification(source, _L("need_to_have_gardening_shovel"))
+            ShowNotification(source, "You need to have a gardening shovel.")
             Interact[source] = false
-            cb(false)
+            return false
         end
     else
         Interact[source] = false
-        cb(false)
+        return false
     end
 end)
